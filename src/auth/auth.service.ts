@@ -21,21 +21,17 @@ export class AuthService {
                 hash,
             },
         });
-        return this.signToken(user.id, user.email);
-
+        const token = this.signToken(user.id, user.email);
+        return {"access_token": token }
         } catch (error) {
-            if (error instanceof PrismaClientKnownRequestError) {
                 if (error.code === 'P2002') {
                     throw new ForbiddenException('Credentials are already in use');
                 }
+                throw error;
             }
-            throw error;
-        }
-       
     }
 
     async signin(dto: AuthDto) { 
-        
         const user = await this.prisma.user.findUnique({
             where: {
                 email: dto.email,
@@ -48,8 +44,8 @@ export class AuthService {
         if (!valid) { 
             throw new ForbiddenException('Wrong email or password');
         }
-
-        return this.signToken(user.id, user.email);
+        const token = await this.signToken(user.id, user.email);
+        return {"access_token": token }
     }
 
     signToken(userId: number, email: string): Promise<string> {
